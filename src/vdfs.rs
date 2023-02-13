@@ -1,12 +1,24 @@
 use bincode::Encode;
-use std::{mem::size_of, collections::BTreeMap, fs::{self, File}, io::Write};
+use std::{
+    collections::BTreeMap,
+    fs::{self, File},
+    io::Write,
+    mem::size_of,
+};
 
-use self::{layout::*, layout::consts::*, data_source::*, btree::catalog::CatalogTree, btree::{extent::ExtentTree, BtreeError}, btree::xattr::XattrTree};
+use self::{
+    btree::catalog::CatalogTree,
+    btree::xattr::XattrTree,
+    btree::{extent::ExtentTree, BtreeError},
+    data_source::*,
+    layout::consts::*,
+    layout::*,
+};
 
-pub mod layout;
 pub mod btree;
-pub mod vdfs_crc;
 pub mod data_source;
+pub mod layout;
+pub mod vdfs_crc;
 
 pub mod unpack;
 
@@ -46,9 +58,10 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
         let super_blocks_offset = 0;
         let super_blocks: Vdfs4SuperBlocks = data_source.read_at(super_blocks_offset)?.data;
 
-        let bitmap_size_in_bytes = super_page_size - size_of::<Vdfs4HeadBtreeNode>() as u64 - size_of::<u32>() as u64;
+        let bitmap_size_in_bytes =
+            super_page_size - size_of::<Vdfs4HeadBtreeNode>() as u64 - size_of::<u32>() as u64;
 
-        Ok(Self { 
+        Ok(Self {
             data_source,
             block_size,
             super_blocks,
@@ -61,21 +74,25 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
             xattr_btree: None,
         })
     }
-
 }
 
 impl<'a, S: DataSourceSource> Vdfs<'a, S> {
-    
     pub fn get_super_blocks(&self) -> &Vdfs4SuperBlocks {
         &self.super_blocks
     }
 
-    pub fn read_btree_head(&self, extent_offset: u64) -> Result<DataPointer<Vdfs4HeadBtreeNode>, VdfsError> {
-        self.data_source.read_at(self.blocks_to_bytes(extent_offset)).map_err(|e| VdfsError::DataSourceError(e))
+    pub fn read_btree_head(
+        &self,
+        extent_offset: u64,
+    ) -> Result<DataPointer<Vdfs4HeadBtreeNode>, VdfsError> {
+        self.data_source
+            .read_at(self.blocks_to_bytes(extent_offset))
+            .map_err(|e| VdfsError::DataSourceError(e))
     }
 
     pub fn read_bitmap_bit(&self, extent_offset: u64, bit_offset: u64) -> Result<bool, BtreeError> {
-        let bitmap_offset_in_bytes = self.blocks_to_bytes(extent_offset) + size_of::<Vdfs4HeadBtreeNode>() as u64;
+        let bitmap_offset_in_bytes =
+            self.blocks_to_bytes(extent_offset) + size_of::<Vdfs4HeadBtreeNode>() as u64;
         let byte_offset_in_bitmap = bit_offset / 8;
         let bit_offset_in_byte = bit_offset % 8;
         let offset_in_bytes = bitmap_offset_in_bytes + byte_offset_in_bitmap;
@@ -113,7 +130,15 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
         Ok(())
     }
 
-    pub fn read_base_tables(&self) -> Result<(Option<DataPointer<Vdfs4BaseTable>>, Option<DataPointer<Vdfs4BaseTable>>), VdfsError> {
+    pub fn read_base_tables(
+        &self,
+    ) -> Result<
+        (
+            Option<DataPointer<Vdfs4BaseTable>>,
+            Option<DataPointer<Vdfs4BaseTable>>,
+        ),
+        VdfsError,
+    > {
         let first_table_offset_in_bytes = self.get_base_table_offset(0);
         let second_table_offset_in_bytes = self.get_base_table_offset(1);
 
@@ -123,21 +148,40 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
         Ok((first_table, second_table))
     }
 
-    fn read_base_table(&self, offset_in_bytes: u64) -> Result<Option<DataPointer<Vdfs4BaseTable>>, VdfsError> {
+    fn read_base_table(
+        &self,
+        offset_in_bytes: u64,
+    ) -> Result<Option<DataPointer<Vdfs4BaseTable>>, VdfsError> {
         let base_table: DataPointer<Vdfs4BaseTable> = self.data_source.read_at(offset_in_bytes)?;
         let size_without_crc32 = base_table.data.descriptor.checksum_offset;
-        if !base_table.data.descriptor.check_signature(VDFS4_SNAPSHOT_BASE_TABLE) || base_table.data.descriptor.checksum_offset > size_without_crc32 { 
-            return Ok(Option::None); 
+        if !base_table
+            .data
+            .descriptor
+            .check_signature(VDFS4_SNAPSHOT_BASE_TABLE)
+            || base_table.data.descriptor.checksum_offset > size_without_crc32
+        {
+            return Ok(Option::None);
         }
-        if self.check_crc32_of_snapshot_descriptor(base_table.position, &base_table.data.descriptor)? {
+        if self
+            .check_crc32_of_snapshot_descriptor(base_table.position, &base_table.data.descriptor)?
+        {
             return Ok(Option::Some(base_table));
         }
         Ok(Option::None)
     }
 
-    fn check_crc32_of_snapshot_descriptor(&self, offset_in_bytes: u64, snapshot_descriptor: &Vdfs4SnapshotDescriptor) -> Result<bool, VdfsError> {
-        let crc32_from_data: u32 = self.data_source.read_at(offset_in_bytes + snapshot_descriptor.checksum_offset)?.data;
-        let body = self.data_source.read_bytes_at(offset_in_bytes, snapshot_descriptor.checksum_offset)?;
+    fn check_crc32_of_snapshot_descriptor(
+        &self,
+        offset_in_bytes: u64,
+        snapshot_descriptor: &Vdfs4SnapshotDescriptor,
+    ) -> Result<bool, VdfsError> {
+        let crc32_from_data: u32 = self
+            .data_source
+            .read_at(offset_in_bytes + snapshot_descriptor.checksum_offset)?
+            .data;
+        let body = self
+            .data_source
+            .read_bytes_at(offset_in_bytes, snapshot_descriptor.checksum_offset)?;
         let crc32_calculated = vdfs_crc::crc32(body.as_slice());
         Ok(crc32_from_data == crc32_calculated)
     }
@@ -145,15 +189,31 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
     pub fn read_extended_tables(&self, base_table: &DataPointer<Vdfs4BaseTable>) {
         let base_table_offset = base_table.position;
         let base_table_size = base_table.data.descriptor.checksum_offset as usize + CRC32_SIZE;
-        let mut extended_table_offset = base_table_offset + size_ceil_to_block(base_table_size, VDFS4_SNAPSHOT_EXT_SIZE) as u64;
+        let mut extended_table_offset =
+            base_table_offset + size_ceil_to_block(base_table_size, VDFS4_SNAPSHOT_EXT_SIZE) as u64;
 
         for extended_table_index in 0..VDFS4_SNAPSHOT_EXT_TABLES {
-            let extended_table: Vdfs4ExtendedTable = self.data_source.read_at(extended_table_offset).unwrap().data;
+            let extended_table: Vdfs4ExtendedTable = self
+                .data_source
+                .read_at(extended_table_offset)
+                .unwrap()
+                .data;
 
-            println!("Base table at {}, Extended Table at {}: {:?}", base_table_offset, extended_table_offset, extended_table);
+            println!(
+                "Base table at {}, Extended Table at {}: {:?}",
+                base_table_offset, extended_table_offset, extended_table
+            );
 
-            if !extended_table.descriptor.check_signature(VDFS4_SNAPSHOT_EXTENDED_TABLE) 
-                || !(self.check_crc32_of_snapshot_descriptor(extended_table_offset, &extended_table.descriptor).unwrap()) {
+            if !extended_table
+                .descriptor
+                .check_signature(VDFS4_SNAPSHOT_EXTENDED_TABLE)
+                || !(self
+                    .check_crc32_of_snapshot_descriptor(
+                        extended_table_offset,
+                        &extended_table.descriptor,
+                    )
+                    .unwrap())
+            {
                 break;
             }
         }
@@ -177,7 +237,9 @@ impl<'a, S: DataSourceSource> Vdfs<'a, S> {
     }
 
     pub fn init_btrees(&mut self) -> Result<(), VdfsError> {
-        let base_table = self.current_base_table.ok_or(VdfsError::BaseTableIsMissing())?;
+        let base_table = self
+            .current_base_table
+            .ok_or(VdfsError::BaseTableIsMissing())?;
         let data_source = self.data_source;
         let btree = CatalogTree::new(data_source, self.super_blocks, base_table)?;
         self.catalog_btree = Some(btree);

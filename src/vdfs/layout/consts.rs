@@ -1,13 +1,15 @@
 use std::mem::size_of;
 
-use super::{Vdfs4CatTreeKey, Vdfs4XattrTreeKey, Vdfs4ExtTreeKey, Vdfs4CatalogFileRecord, Vdfs4ExtTreeRecord};
+use super::{
+    Vdfs4CatTreeKey, Vdfs4CatalogFileRecord, Vdfs4ExtTreeKey, Vdfs4ExtTreeRecord, Vdfs4XattrTreeKey,
+};
 
 const fn max_u64(a: u64, b: u64) -> u64 {
     if a > b {
-		return a;
-	} else {
-		return b;
-	}
+        return a;
+    } else {
+        return b;
+    }
 }
 
 pub const CRC32_SIZE: usize = 4;
@@ -19,10 +21,14 @@ pub const VDFS4_XATTR_NAME_MAX_LEN: usize = 200;
 pub const VDFS4_XATTR_VAL_MAX_LEN: usize = 200;
 
 pub const VDFS4_CAT_KEY_MAX_LEN: u64 = size_ceil_to_block(size_of::<Vdfs4CatTreeKey>(), 8) as u64;
-pub const VDFS4_XATTR_KEY_MAX_LEN: u64 = size_ceil_to_block(size_of::<Vdfs4XattrTreeKey>(), 8) as u64;
+pub const VDFS4_XATTR_KEY_MAX_LEN: u64 =
+    size_ceil_to_block(size_of::<Vdfs4XattrTreeKey>(), 8) as u64;
 pub const VDFS4_EXT_KEY_MAX_LEN: u64 = size_ceil_to_block(size_of::<Vdfs4ExtTreeKey>(), 8) as u64;
 
-pub const VDFS4_KEY_MAX_LEN: u64 = max_u64(VDFS4_CAT_KEY_MAX_LEN, max_u64(VDFS4_XATTR_KEY_MAX_LEN, VDFS4_EXT_KEY_MAX_LEN));
+pub const VDFS4_KEY_MAX_LEN: u64 = max_u64(
+    VDFS4_CAT_KEY_MAX_LEN,
+    max_u64(VDFS4_XATTR_KEY_MAX_LEN, VDFS4_EXT_KEY_MAX_LEN),
+);
 
 pub const VDFS4_EXTENTS_COUNT_IN_FORK: usize = 9;
 
@@ -68,16 +74,24 @@ pub const VDFS4_META_BTREE_EXTENTS: usize = 96;
 pub const VDFS4_INVALID_NODE_ID: u64 = 0;
 
 pub enum SpecialInodeIds {
-	RootDirObject = 0,	/** parent_id of root inode */
-	Root = 1,		/** root inode */
-	CatTree = 2,		/** catalog tree inode */
-	SpaceBitmap = 3,		/** free space bitmap inode */
-	ExtentsTree = 4,		/** inode bitamp inode number */
-	FreeInodeBitmap = 5,	/** Free space bitmap inode */
-	XattrTree = 6,		/** XAttr tree ino */
-	Snapshot = 7,
-	OrphanInodes = 8,		/** FIXME remove this line breaks fsck*/
-	FirstFile = 9		// First file inode
+    RootDirObject = 0,
+    /** parent_id of root inode */
+    Root = 1,
+    /** root inode */
+    CatTree = 2,
+    /** catalog tree inode */
+    SpaceBitmap = 3,
+    /** free space bitmap inode */
+    ExtentsTree = 4,
+    /** inode bitamp inode number */
+    FreeInodeBitmap = 5,
+    /** Free space bitmap inode */
+    XattrTree = 6,
+    /** XAttr tree ino */
+    Snapshot = 7,
+    OrphanInodes = 8,
+    /** FIXME remove this line breaks fsck*/
+    FirstFile = 9, // First file inode
 }
 
 pub const VDFS4_FSFILE: u32 = SpecialInodeIds::CatTree as u32;
@@ -85,63 +99,62 @@ pub const VDFS4_LSFILE: u32 = SpecialInodeIds::XattrTree as u32;
 
 #[derive(Debug, Clone, Copy)]
 pub enum BnodeType {
-	CatalogTree = 2,
-	SpaceBitmap = 3,
-	ExtentsTree = 4,
-	FreeInodeBitmap = 5,
-	XAttrTree = 6
+    CatalogTree = 2,
+    SpaceBitmap = 3,
+    ExtentsTree = 4,
+    FreeInodeBitmap = 5,
+    XAttrTree = 6,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum BtreeType {
-	CatalogTree = BnodeType::CatalogTree as isize,
-	ExtentsTree = BnodeType::ExtentsTree as isize,
-	XAttrTree = BnodeType::XAttrTree as isize
+    CatalogTree = BnodeType::CatalogTree as isize,
+    ExtentsTree = BnodeType::ExtentsTree as isize,
+    XAttrTree = BnodeType::XAttrTree as isize,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum CatalogTreeRecordType {
-	Dummy = 0,
-	Folder = 1,
-	File = 2,
-	HLink = 3,
-	ILink = 5,
-	UnpackInode = 10,
+    Dummy = 0,
+    Folder = 1,
+    File = 2,
+    HLink = 3,
+    ILink = 5,
+    UnpackInode = 10,
 }
 
 pub enum VdfsFileFlags {
-	HasBlocksInExttree = 1,
-	Immutable = 2,
-	HardLink = 10,
-	OrphanInode = 12,
-	CompressedFile = 13,
-	AuthFile = 15,
-	ReadOnlyAuth = 16,
-	EncryptedFile = 17,
-	ProfiledFile = 18,
+    HasBlocksInExttree = 1,
+    Immutable = 2,
+    HardLink = 10,
+    OrphanInode = 12,
+    CompressedFile = 13,
+    AuthFile = 15,
+    ReadOnlyAuth = 16,
+    EncryptedFile = 17,
+    ProfiledFile = 18,
 }
 
 pub enum VdfsFileCompression {
-	Zlib,
-	Gzip,
-	Lzo
+    Zlib,
+    Gzip,
+    Lzo,
 }
 
 pub enum VdfsFileAuth {
-	Md5,
-	Sha1,
-	Sha256,
+    Md5,
+    Sha1,
+    Sha256,
 }
 
 pub enum VdfsFileSignatureType {
-	None = 0x0,
-	Rsa1024 = 0x1,
-	Rsa2048 = 0x2,
+    None = 0x0,
+    Rsa1024 = 0x1,
+    Rsa2048 = 0x2,
 }
 
-
 pub trait TranslationTableIndex {
-	fn get_index(self) -> usize;
+    fn get_index(self) -> usize;
 }
 
 impl TranslationTableIndex for BnodeType {
@@ -157,45 +170,49 @@ impl TranslationTableIndex for BtreeType {
 }
 
 impl BtreeType {
-	pub fn get_max_record_len(self) -> u64 {
-		match self {
-			BtreeType::CatalogTree => VDFS4_CAT_KEY_MAX_LEN + size_of::<Vdfs4CatalogFileRecord>() as u64,
-			BtreeType::ExtentsTree => VDFS4_EXT_KEY_MAX_LEN + size_of::<Vdfs4ExtTreeRecord>() as u64,
-			BtreeType::XAttrTree => VDFS4_XATTR_KEY_MAX_LEN + VDFS4_XATTR_VAL_MAX_LEN as u64,
-		}
-	}
+    pub fn get_max_record_len(self) -> u64 {
+        match self {
+            BtreeType::CatalogTree => {
+                VDFS4_CAT_KEY_MAX_LEN + size_of::<Vdfs4CatalogFileRecord>() as u64
+            }
+            BtreeType::ExtentsTree => {
+                VDFS4_EXT_KEY_MAX_LEN + size_of::<Vdfs4ExtTreeRecord>() as u64
+            }
+            BtreeType::XAttrTree => VDFS4_XATTR_KEY_MAX_LEN + VDFS4_XATTR_VAL_MAX_LEN as u64,
+        }
+    }
 }
 
 impl SpecialInodeIds {
-	pub fn from_u32(index: u32) -> Option<SpecialInodeIds> {
-		match index {
-			0 => return Some(SpecialInodeIds::RootDirObject),
-			1 => return Some(SpecialInodeIds::Root),
-			2 => return Some(SpecialInodeIds::CatTree),
-			3 => return Some(SpecialInodeIds::SpaceBitmap),
-			4 => return Some(SpecialInodeIds::ExtentsTree),
-			5 => return Some(SpecialInodeIds::FreeInodeBitmap),
-			6 => return Some(SpecialInodeIds::XattrTree),
-			7 => return Some(SpecialInodeIds::Snapshot),
-			8 => return Some(SpecialInodeIds::OrphanInodes),
-			9 => return Some(SpecialInodeIds::FirstFile),
-			_ => return None
-		}
-	}
+    pub fn from_u32(index: u32) -> Option<SpecialInodeIds> {
+        match index {
+            0 => return Some(SpecialInodeIds::RootDirObject),
+            1 => return Some(SpecialInodeIds::Root),
+            2 => return Some(SpecialInodeIds::CatTree),
+            3 => return Some(SpecialInodeIds::SpaceBitmap),
+            4 => return Some(SpecialInodeIds::ExtentsTree),
+            5 => return Some(SpecialInodeIds::FreeInodeBitmap),
+            6 => return Some(SpecialInodeIds::XattrTree),
+            7 => return Some(SpecialInodeIds::Snapshot),
+            8 => return Some(SpecialInodeIds::OrphanInodes),
+            9 => return Some(SpecialInodeIds::FirstFile),
+            _ => return None,
+        }
+    }
 }
 
 impl CatalogTreeRecordType {
-	pub fn from_u8(index: u8) -> Option<CatalogTreeRecordType> {
-		match index {
-			0 => return Some(Self::Dummy),
-			1 => return Some(Self::Folder),
-			2 => return Some(Self::File),
-			3 => return Some(Self::HLink),
-			5 => return Some(Self::ILink),
-			10 => return Some(Self::UnpackInode),
-			_ => return None,
-		}
-	}
+    pub fn from_u8(index: u8) -> Option<CatalogTreeRecordType> {
+        match index {
+            0 => return Some(Self::Dummy),
+            1 => return Some(Self::Folder),
+            2 => return Some(Self::File),
+            3 => return Some(Self::HLink),
+            5 => return Some(Self::ILink),
+            10 => return Some(Self::UnpackInode),
+            _ => return None,
+        }
+    }
 }
 
 pub const BLOCK_SIZE_DEFAULT: u64 = 4096;
@@ -206,70 +223,77 @@ pub const fn size_ceil_to_block(size: usize, block_size: usize) -> usize {
 }
 
 impl VdfsFileSignatureType {
-	pub fn get_signature_length(&self) -> u64 {
-		match self {
-			VdfsFileSignatureType::None => 0,
-			VdfsFileSignatureType::Rsa1024 => 128,
-			VdfsFileSignatureType::Rsa2048 => 256,
-		}
-	}
+    pub fn get_signature_length(&self) -> u64 {
+        match self {
+            VdfsFileSignatureType::None => 0,
+            VdfsFileSignatureType::Rsa1024 => 128,
+            VdfsFileSignatureType::Rsa2048 => 256,
+        }
+    }
 
-	pub fn from_u8(value: u8) -> Option<Self> {
+    pub fn from_u8(value: u8) -> Option<Self> {
         match value {
-			0 => Some(Self::None),
-			1 => Some(Self::Rsa1024),
-			2 => Some(Self::Rsa2048),
-			_ => None
-		}
+            0 => Some(Self::None),
+            1 => Some(Self::Rsa1024),
+            2 => Some(Self::Rsa2048),
+            _ => None,
+        }
     }
 }
 
 impl VdfsFileAuth {
-	pub fn get_hash_len(&self) -> u64 {
-		match self {
-			VdfsFileAuth::Md5 => VDFS4_MD5_HASH_LEN as u64,
-			VdfsFileAuth::Sha1 => VDFS4_SHA1_HASH_LEN as u64,
-			VdfsFileAuth::Sha256 => VDFS4_SHA256_HASH_LEN as u64,
-		}
-	}
+    pub fn get_hash_len(&self) -> u64 {
+        match self {
+            VdfsFileAuth::Md5 => VDFS4_MD5_HASH_LEN as u64,
+            VdfsFileAuth::Sha1 => VDFS4_SHA1_HASH_LEN as u64,
+            VdfsFileAuth::Sha256 => VDFS4_SHA256_HASH_LEN as u64,
+        }
+    }
 }
-
-
 
 // GNU
 
 /* Encoding of the file mode.  */
 
-pub const FILE_TYPE_MASK: u16 = 0o0170000;	/* These bits determine file type.  */
+pub const FILE_TYPE_MASK: u16 = 0o0170000; /* These bits determine file type.  */
 
 #[derive(Debug, Clone, Copy)]
 pub enum FileType {
-	Directory = 0o0040000,
-	CharacterDevice = 0o0020000,
-	BlockDevice = 0o0060000,
-	Regular = 0o0100000,
-	Fifo = 0o0010000,
-	SymbolicLink = 0o0120000,
-	Socket = 0o0140000,
+    Directory = 0o0040000,
+    CharacterDevice = 0o0020000,
+    BlockDevice = 0o0060000,
+    Regular = 0o0100000,
+    Fifo = 0o0010000,
+    SymbolicLink = 0o0120000,
+    Socket = 0o0140000,
 }
 
 impl FileType {
-	pub fn to_u16(&self) -> u16 {
-		*self as u16
-	}
+    pub fn to_u16(&self) -> u16 {
+        *self as u16
+    }
 
-	pub fn from_u16(file_type: u16) -> Option<FileType> {
-		if FileType::Directory.is_file_type(file_type) { Some(FileType::Directory) }
-			else if FileType::CharacterDevice.is_file_type(file_type) { Some(FileType::CharacterDevice) }
-			else if FileType::BlockDevice.is_file_type(file_type) { Some(FileType::BlockDevice) }
-			else if FileType::Regular.is_file_type(file_type) { Some(FileType::Regular) }
-			else if FileType::Fifo.is_file_type(file_type) { Some(FileType::Fifo) }
-			else if FileType::SymbolicLink.is_file_type(file_type) { Some(FileType::SymbolicLink) }
-			else if FileType::Socket.is_file_type(file_type) { Some(FileType::Socket) }
-			else { None }
-	}
+    pub fn from_u16(file_type: u16) -> Option<FileType> {
+        if FileType::Directory.is_file_type(file_type) {
+            Some(FileType::Directory)
+        } else if FileType::CharacterDevice.is_file_type(file_type) {
+            Some(FileType::CharacterDevice)
+        } else if FileType::BlockDevice.is_file_type(file_type) {
+            Some(FileType::BlockDevice)
+        } else if FileType::Regular.is_file_type(file_type) {
+            Some(FileType::Regular)
+        } else if FileType::Fifo.is_file_type(file_type) {
+            Some(FileType::Fifo)
+        } else if FileType::SymbolicLink.is_file_type(file_type) {
+            Some(FileType::SymbolicLink)
+        } else if FileType::Socket.is_file_type(file_type) {
+            Some(FileType::Socket)
+        } else {
+            None
+        }
+    }
 
-	pub fn is_file_type(&self, file_mode: u16) -> bool {
-		(file_mode & FILE_TYPE_MASK) == self.to_u16()
-	}
+    pub fn is_file_type(&self, file_mode: u16) -> bool {
+        (file_mode & FILE_TYPE_MASK) == self.to_u16()
+    }
 }
